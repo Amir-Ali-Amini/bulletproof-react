@@ -24,18 +24,6 @@ const convert = (queryClient: QueryClient) => (m: any) => {
 export const createAppRouter = (queryClient: QueryClient) =>
   createBrowserRouter([
     {
-      path: paths.home.path,
-      lazy: () => import('./routes/landing').then(convert(queryClient)),
-    },
-    {
-      path: paths.auth.register.path,
-      lazy: () => import('./routes/auth/register').then(convert(queryClient)),
-    },
-    {
-      path: paths.auth.login.path,
-      lazy: () => import('./routes/auth/login').then(convert(queryClient)),
-    },
-    {
       path: paths.app.root.path,
       element: (
         <ProtectedRoute>
@@ -44,6 +32,15 @@ export const createAppRouter = (queryClient: QueryClient) =>
       ),
       ErrorBoundary: AppRootErrorBoundary,
       children: [
+        {
+          path: paths.app.root.path,
+          lazy: () => import('./routes/landing').then(convert(queryClient)),
+        },
+        {
+          path: paths.app.payment.path,
+          lazy: () =>
+            import('../components/pages/payment').then(convert(queryClient)),
+        },
         {
           path: paths.app.discussions.path,
           lazy: () =>
