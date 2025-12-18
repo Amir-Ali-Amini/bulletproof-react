@@ -54,15 +54,30 @@ interface TransactionType {
 const API_BASE_URL = 'http://10.72.103.60:8000/api/v1';
 const api = {
   // getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/api/v1/cards`),
-  getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/cards`),
+  getCards: () =>
+    axios.get<BankCardType[]>(`${API_BASE_URL}/cards`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+      },
+    }),
   getTransactions: () =>
-    axios.get<TransactionType[]>(`${API_BASE_URL}/payments`),
+    axios.get<TransactionType[]>(`${API_BASE_URL}/payments`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+      },
+    }),
   addCard: (data: Partial<BankCardType>) => {
     const [year, month] = data.expiry.split('/');
     axios.post<BankCardType>(`${API_BASE_URL}/cards`, {
       ...data,
       exp_year: year,
       exp_month: month,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+      },
     });
   },
 };
@@ -290,12 +305,16 @@ const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
         )}
       </Avatar>
       <Box sx={{ flex: 1, mx: 2 }}>
-        <Typography fontWeight="500" fontSize={14} sx={{ color: '#1E293B' }}>
-          {transaction.title}
+        <Typography
+          fontWeight="800"
+          fontSize={16}
+          sx={{ color: isPositive ? '#146d35ff' : '#812424ff' }}
+        >
+          {`فروشنده: ${transaction.merchant_name}`}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
           <Typography fontSize={12} sx={{ color: '#94A3B8' }}>
-            {transaction.date}
+            {transaction.confirmed_at}
           </Typography>
           <Chip
             label={transaction.category}
@@ -315,7 +334,7 @@ const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
           fontSize={14}
           sx={{ color: isPositive ? '#22C55E' : '#EF4444', direction: 'ltr' }}
         >
-          {isPositive ? '+' : ''}
+          {isPositive ? '' : ''}
           {formatNumber(transaction.amount)} ریال
         </Typography>
         <Box
@@ -484,7 +503,6 @@ export const PaymentsPage = () => {
             flexWrap: 'nowrap',
             minWidth: 0,
             width: '100%',
-            flexWrap: 'nowrap',
             scrollSnapType: 'x mandatory',
             '& > *': {
               flexShrink: 0,
@@ -517,9 +535,6 @@ export const PaymentsPage = () => {
           <Typography variant="h6" fontWeight="600" sx={{ color: '#1a1a1a' }}>
             تراکنش‌های اخیر
           </Typography>
-          <Button size="small" sx={{ color: '#1E88E5' }}>
-            مشاهده همه
-          </Button>
         </Box>
         <Divider sx={{ mb: 2 }} />
         {loadingTx ? (

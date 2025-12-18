@@ -50,7 +50,7 @@ const cacheRtl = createCache({
 
 const theme = createTheme({
   direction: 'rtl',
-  typography: { fontFamily: 'Vazirmatn, Tahoma, sans-serif' },
+  typography: { fontFamily: 'Vazir, Vazirmatn, Tahoma, sans-serif' },
   palette: {
     primary: { main: '#1E88E5', light: '#E3F2FD' },
     background: { default: '#F0F4F8' },
