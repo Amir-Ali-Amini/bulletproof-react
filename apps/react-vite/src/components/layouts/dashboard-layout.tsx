@@ -34,7 +34,6 @@ import {
   CreditCard,
   ArrowBack,
   Menu as MenuIcon,
-  CameraAlt,
 } from '@mui/icons-material';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
@@ -65,7 +64,7 @@ const MOBILE_SHORTCUTS = [
   {
     id: 'home',
     label: 'خانه',
-    path: paths.app.payment.getHref(),
+    path: paths.app.inPerson.getHref(),
     icon: <Home />,
   },
   {
@@ -76,8 +75,8 @@ const MOBILE_SHORTCUTS = [
   },
   {
     id: 'in-person',
+    path: paths.app.payment.getHref(),
     label: 'خرید حضوری',
-    path: paths.app.inPerson.getHref(),
     icon: <Store />,
   },
   {
@@ -85,12 +84,6 @@ const MOBILE_SHORTCUTS = [
     label: 'اعتبارهای من',
     path: paths.app.credits.getHref(),
     icon: <CreditCard />,
-  },
-  {
-    id: 'scan',
-    label: 'اسکن QR',
-    path: paths.app.scan.getHref(),
-    icon: <CameraAlt />,
   },
 ];
 
@@ -103,7 +96,12 @@ const DesktopHeader = () => (
   <AppBar
     position="static"
     elevation={0}
-    sx={{ bgcolor: 'white', borderBottom: '1px solid #E5E7EB' }}
+    sx={{
+      bgcolor: 'white',
+      borderBottom: '1px solid #E5E7EB',
+      position: 'sticky',
+      display: 'flex',
+    }}
   >
     <Toolbar
       sx={{
@@ -318,11 +316,7 @@ const MobileHeader = ({ showMenu, onToggleMenu }: MobileHeaderProps) => (
   </AppBar>
 );
 
-const MobileMenu = ({
-  onNavigate,
-}: {
-  onNavigate: (path: string) => void;
-}) => (
+const MobileMenu = ({ onNavigate }: { onNavigate: (path: string) => void }) => (
   <Paper elevation={0} sx={{ mt: 2, borderRadius: 3 }}>
     <List disablePadding>
       {DASHBOARD_NAV_ITEMS.map((item) => (
@@ -396,7 +390,16 @@ export function DashboardLayout({ children }: PropsWithChildren) {
     <CacheProvider value={cacheRtl}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Box dir="rtl" sx={{ minHeight: '100vh', bgcolor: '#EFF6FF' }}>
+        <Box
+          dir="rtl"
+          sx={{
+            minHeight: '100vh',
+            maxHeight: '100vh',
+            maxWidth: '100%',
+            bgcolor: '#EFF6FF',
+            overflowY: 'scroll',
+          }}
+        >
           {isMobile ? (
             <>
               <MobileHeader
@@ -421,11 +424,16 @@ export function DashboardLayout({ children }: PropsWithChildren) {
               <DesktopSecondaryNav />
               <Box
                 sx={{
-                  maxWidth: 1280,
+                  maxWidth: '1280px',
+                  maxHeight: '100%',
                   mx: 'auto',
+                  width: '100%',
                   p: 3,
                   display: 'flex',
                   gap: 3,
+                  position: 'sticky',
+                  top: 24, // adjust based on your desired spacing from top
+                  alignSelf: 'flex-start',
                 }}
               >
                 <DesktopSidebar
@@ -437,10 +445,14 @@ export function DashboardLayout({ children }: PropsWithChildren) {
                   elevation={0}
                   sx={{
                     flex: 1,
+                    minWidth: 0, // add this - key fix
                     borderRadius: 3,
                     p: 4,
                     border: '1px solid #E5E7EB',
                     minHeight: 500,
+                    maxHeight: '100%',
+                    overflowX: 'hidden', // add this
+                    overflowY: 'scroll', // add this
                   }}
                 >
                   {children}

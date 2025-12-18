@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -14,6 +16,7 @@ import {
   Button,
   TextField,
   CircularProgress,
+  alpha,
 } from '@mui/material';
 import {
   Add,
@@ -30,35 +33,38 @@ import { paths } from '@/config/paths';
 // ============ TYPES ============
 interface BankCardType {
   id: number;
-  bankName: string;
-  cardNumber: string;
+  brand: string;
+  masked_pan: string;
   balance: number;
   color: string;
-  expiry: string;
+  exp_year: string;
 }
 
 interface TransactionType {
-  id: number;
+  id: string;
   title: string;
   amount: number;
   date: string;
   status: 'success' | 'pending' | 'failed';
   category: string;
+  merchant_name: string;
 }
 
 // ============ API CALLS ============
 const API_BASE_URL = import.meta.env.API_BASE_URL;
 const api = {
-  getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/api/v1/cards`),
+  // getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/api/v1/cards`),
+  getCards: () =>
+    axios.get<BankCardType[]>(`http://192.168.110.135:8000/api/v1/cards`),
   getTransactions: () =>
-    axios.get<TransactionType[]>(`${API_BASE_URL}/transactions`),
+    axios.get<TransactionType[]>(`http://192.168.110.135:8000/api/v1/payments`),
   addCard: (data: Partial<BankCardType>) =>
     axios.post<BankCardType>(`${API_BASE_URL}/cards`, data),
 };
 
 // ============ HELPERS ============
 const formatNumber = (num: number) => num.toLocaleString('fa-IR');
-const maskCardNumber = (num: string) =>
+const maskmasked_pan = (num: string) =>
   num.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1-$2-$3-$4');
 
 // ============ COMPONENTS ============
@@ -115,10 +121,10 @@ const BankCard = ({ card }: { card: BankCardType }) => (
         }}
       >
         <Typography sx={{ fontSize: 12, opacity: 0.9 }}>
-          {card.expiry}
+          {card.exp_year}
         </Typography>
         <Typography fontWeight="600" fontSize={14}>
-          {card.bankName}
+          {card.brand}
         </Typography>
       </Box>
       <Typography
@@ -130,7 +136,7 @@ const BankCard = ({ card }: { card: BankCardType }) => (
           direction: 'ltr',
         }}
       >
-        {maskCardNumber(card.cardNumber)}
+        {maskmasked_pan(card.masked_pan)}
       </Typography>
       <Box
         sx={{
@@ -204,7 +210,7 @@ const CardSkeleton = () => (
 const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
   const isPositive = transaction.amount > 0;
   const statusConfig = {
-    success: {
+    confirmed: {
       icon: <CheckCircle sx={{ fontSize: 18 }} />,
       color: '#22C55E',
       label: 'موفق',
@@ -214,13 +220,34 @@ const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
       color: '#F59E0B',
       label: 'در انتظار',
     },
-    failed: {
+    initiated: {
+      icon: <AccessTime sx={{ fontSize: 18 }} />,
+      color: '#F59E0B',
+      label: 'در انتظار',
+    },
+    declined: {
       icon: <Cancel sx={{ fontSize: 18 }} />,
       color: '#EF4444',
       label: 'ناموفق',
     },
+    cancelled: {
+      icon: <Cancel sx={{ fontSize: 18 }} />,
+      color: '#EF4444',
+      label: 'لغو شده',
+    },
+    expired: {
+      icon: <Cancel sx={{ fontSize: 18 }} />,
+      color: '#EF4444',
+      label: 'منقضی شده',
+    },
   };
-  const status = statusConfig[transaction.status];
+  console.log(
+    'transaction.status:',
+    transaction.status,
+    transaction.status.toLowerCase(),
+  );
+  const status = statusConfig[transaction.status.toLowerCase() || 'expired'];
+  console.log('status:', status);
 
   return (
     <Box
@@ -229,6 +256,11 @@ const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
         alignItems: 'center',
         py: 2,
         borderBottom: '1px solid #F1F5F9',
+        border: '2px solid ',
+        borderColor: alpha(status.color, 0.2), // 10% opacity,
+        borderRadius: '16px',
+        padding: '8px',
+        backgroundColor: alpha(status.color, 0.1), // 10% opacity
       }}
     >
       <Avatar
@@ -317,35 +349,105 @@ export const PaymentsPage = () => {
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingTx, setLoadingTx] = useState(true);
 
+  const cardColors = [
+    '#4F46E5',
+    '#10B981',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#EC4899',
+  ];
+  const bankNames = ['بلو', 'ملت', 'ملی', 'پاسارگاد', 'پارسیان', 'سپه'];
+  const card_static = {
+    id: 'idddd',
+    brand: 'stfsfsafawring',
+    masked_pan: 'item.mfdsafasfdsasked_pan' as string,
+    balance: '23040',
+    exp_year: 2009 as number,
+  };
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCards = async () => {
       try {
         const cardsRes = await api.getCards();
-        setCards(Array.isArray(cardsRes.data) ? cardsRes.data : []);
+        console.log('xards:', cardsRes);
+        setCards(
+          Array.isArray(cardsRes.data)
+            ? cardsRes.data.map((item, index) => ({
+                ...item,
+                balance: '*****',
+                brand:
+                  item.brand != 'UNKNOWN'
+                    ? item.brand
+                    : bankNames[index % bankNames.length],
+                color: cardColors[index % cardColors.length] as string,
+              }))
+            : [],
+        );
       } catch (e) {
         console.error('Error fetching cards:', e);
-        setCards([]);
+        // setCards([]);
+      } finally {
+        setLoadingCards(false);
       }
-      setLoadingCards(false);
+    };
+    console.log('cards:', cards);
 
+    const fetchTransactions = async () => {
       try {
         const txRes = await api.getTransactions();
-        setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
+        console.log('txRes', txRes);
+        setTransactions(
+          Array.isArray(txRes.data.results) ? txRes.data.results : [],
+        );
       } catch (e) {
         console.error('Error fetching transactions:', e);
         setTransactions([]);
+      } finally {
+        setLoadingTx(false);
       }
-      setLoadingTx(false);
     };
-    fetchData();
+
+    // Fetch both in parallel
+    fetchCards();
+    fetchTransactions();
   }, []);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+        width: '100%',
+        minWidth: 0,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          maxWidth: '100%',
+        }}
+      >
+        <Button
+          variant="outlined"
+          onClick={() => navigate(paths.app.scan.getHref())}
+          sx={{ borderRadius: 2 }}
+        >
+          اسکن QR برای پرداخت
+        </Button>
+      </Box>
       {/* Cards Section */}
       <Paper
         elevation={0}
-        sx={{ borderRadius: 3, p: 3, border: '1px solid #E5E7EB' }}
+        sx={{
+          borderRadius: 3,
+          p: 3,
+          minWidth: 0, // add this
+          border: '1px solid #E5E7EB',
+          maxWidth: '100%',
+          overflowX: 'hidden',
+        }}
       >
         <Typography
           variant="h6"
@@ -358,17 +460,26 @@ export const PaymentsPage = () => {
           sx={{
             display: 'flex',
             gap: 2,
-            overflowX: 'auto',
-            pb: 1,
+            overflowX: 'scroll',
+            pb: 2,
             direction: 'ltr',
+            flexWrap: 'nowrap',
+            minWidth: 0,
+            width: '100%',
+            flexWrap: 'nowrap',
+            scrollSnapType: 'x mandatory',
+            '& > *': {
+              flexShrink: 0,
+              scrollSnapAlign: 'start',
+            },
           }}
         >
-          <AddCardButton
-            onClick={() => navigate(paths.app.addCard.getHref())}
-          />
           {loadingCards
             ? [...Array(2)].map((_, i) => <CardSkeleton key={i} />)
             : cards.map((card) => <BankCard key={card.id} card={card} />)}
+          <AddCardButton
+            onClick={() => navigate(paths.app.addCard.getHref())}
+          />
         </Box>
       </Paper>
 
@@ -414,14 +525,14 @@ export const AddCardPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    cardNumber: '',
-    expiry: '',
-    bankName: '',
+    masked_pan: '',
+    exp_year: '',
+    brand: '',
     cvv: '',
   });
 
   const handleSubmit = async () => {
-    if (!form.cardNumber || !form.expiry) return;
+    if (!form.masked_pan || !form.exp_year) return;
 
     setLoading(true);
     try {
@@ -456,16 +567,16 @@ export const AddCardPage = () => {
           fullWidth
           label="نام بانک"
           placeholder="مثال: بانک ملت"
-          value={form.bankName}
-          onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+          value={form.brand}
+          onChange={(e) => setForm({ ...form, brand: e.target.value })}
           sx={{ mb: 3 }}
         />
         <TextField
           fullWidth
           label="شماره کارت"
           placeholder="xxxx-xxxx-xxxx-xxxx"
-          value={form.cardNumber}
-          onChange={(e) => setForm({ ...form, cardNumber: e.target.value })}
+          value={form.masked_pan}
+          onChange={(e) => setForm({ ...form, masked_pan: e.target.value })}
           sx={{ mb: 3 }}
           inputProps={{ style: { direction: 'ltr', textAlign: 'left' } }}
         />
@@ -482,8 +593,8 @@ export const AddCardPage = () => {
           fullWidth
           label="تاریخ انقضا"
           placeholder="1404/06"
-          value={form.expiry}
-          onChange={(e) => setForm({ ...form, expiry: e.target.value })}
+          value={form.exp_year}
+          onChange={(e) => setForm({ ...form, exp_year: e.target.value })}
           sx={{ mb: 3 }}
           inputProps={{ style: { direction: 'ltr', textAlign: 'left' } }}
         />
