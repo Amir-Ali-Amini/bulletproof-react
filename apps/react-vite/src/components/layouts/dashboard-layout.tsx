@@ -99,8 +99,7 @@ const DesktopHeader = () => (
     sx={{
       bgcolor: 'white',
       borderBottom: '1px solid #E5E7EB',
-      position: 'sticky',
-      display: 'flex',
+      flexShrink: 0, // prevent header from shrinking
     }}
   >
     <Toolbar
@@ -163,7 +162,9 @@ const DesktopHeader = () => (
 );
 
 const DesktopSecondaryNav = () => (
-  <Box sx={{ bgcolor: 'white', borderBottom: '1px solid #E5E7EB' }}>
+  <Box
+    sx={{ bgcolor: 'white', borderBottom: '1px solid #E5E7EB', flexShrink: 0 }}
+  >
     <Toolbar
       variant="dense"
       sx={{
@@ -208,6 +209,7 @@ const DesktopSidebar = ({ activePath, onNavigate }: NavigationProps) => (
       flexShrink: 0,
       height: 'fit-content',
       border: '1px solid #E5E7EB',
+      alignSelf: 'flex-start', // keeps sidebar at top
     }}
   >
     <Box
@@ -300,7 +302,7 @@ const MobileHeader = ({ showMenu, onToggleMenu }: MobileHeaderProps) => (
     position="static"
     color="inherit"
     elevation={0}
-    sx={{ bgcolor: 'white', borderBottom: '1px solid #E5E7EB' }}
+    sx={{ bgcolor: 'white', borderBottom: '1px solid #E5E7EB', flexShrink: 0 }}
   >
     <Toolbar sx={{ minHeight: 56 }}>
       <Typography
@@ -393,11 +395,11 @@ export function DashboardLayout({ children }: PropsWithChildren) {
         <Box
           dir="rtl"
           sx={{
-            minHeight: '100vh',
-            maxHeight: '100vh',
-            maxWidth: '100%',
+            height: '100vh',
             bgcolor: '#EFF6FF',
-            overflowY: 'scroll',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
           }}
         >
           {isMobile ? (
@@ -407,11 +409,13 @@ export function DashboardLayout({ children }: PropsWithChildren) {
                 onToggleMenu={handleMenuToggle}
               />
               {showMenu ? (
-                <Box sx={{ p: 2, pb: 10 }}>
+                <Box sx={{ p: 2, pb: 10, flex: 1, overflowY: 'auto' }}>
                   <MobileMenu onNavigate={handleMenuNavigate} />
                 </Box>
               ) : (
-                <Box sx={{ p: 2, pb: 10 }}>{children}</Box>
+                <Box sx={{ p: 2, pb: 10, flex: 1, overflowY: 'auto' }}>
+                  {children}
+                </Box>
               )}
               <MobileBottomNav
                 activePath={activePath}
@@ -425,15 +429,13 @@ export function DashboardLayout({ children }: PropsWithChildren) {
               <Box
                 sx={{
                   maxWidth: '1280px',
-                  maxHeight: '100%',
                   mx: 'auto',
                   width: '100%',
                   p: 3,
                   display: 'flex',
                   gap: 3,
-                  position: 'sticky',
-                  top: 24, // adjust based on your desired spacing from top
-                  alignSelf: 'flex-start',
+                  flex: 1,
+                  minHeight: 0, // KEY: allows flex child to shrink
                 }}
               >
                 <DesktopSidebar
@@ -445,14 +447,13 @@ export function DashboardLayout({ children }: PropsWithChildren) {
                   elevation={0}
                   sx={{
                     flex: 1,
-                    minWidth: 0, // add this - key fix
+                    minWidth: 0,
+                    minHeight: 0, // KEY: allows this to shrink
                     borderRadius: 3,
                     p: 4,
                     border: '1px solid #E5E7EB',
-                    minHeight: 500,
-                    maxHeight: '100%',
-                    overflowX: 'hidden', // add this
-                    overflowY: 'scroll', // add this
+                    overflowY: 'auto', // only this scrolls
+                    overflowX: 'hidden',
                   }}
                 >
                   {children}

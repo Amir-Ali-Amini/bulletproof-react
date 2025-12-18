@@ -29,8 +29,8 @@ export const paths = {
       getHref: () => '/app/credits',
     },
     scan: {
-      path: 'scan',
-      getHref: () => '/app/scan',
+      path: 'scan/:cardId',
+      getHref: (cardId: string) => `/app/scan/${cardId}`,
     },
   },
 } as const;

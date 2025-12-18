@@ -51,15 +51,20 @@ interface TransactionType {
 }
 
 // ============ API CALLS ============
-const API_BASE_URL = import.meta.env.API_BASE_URL;
+const API_BASE_URL = 'http://10.72.103.60:8000/api/v1';
 const api = {
   // getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/api/v1/cards`),
-  getCards: () =>
-    axios.get<BankCardType[]>(`http://192.168.110.135:8000/api/v1/cards`),
+  getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/cards`),
   getTransactions: () =>
-    axios.get<TransactionType[]>(`http://192.168.110.135:8000/api/v1/payments`),
-  addCard: (data: Partial<BankCardType>) =>
-    axios.post<BankCardType>(`${API_BASE_URL}/cards`, data),
+    axios.get<TransactionType[]>(`${API_BASE_URL}/payments`),
+  addCard: (data: Partial<BankCardType>) => {
+    const [year, month] = data.expiry.split('/');
+    axios.post<BankCardType>(`${API_BASE_URL}/cards`, {
+      ...data,
+      exp_year: year,
+      exp_month: month,
+    });
+  },
 };
 
 // ============ HELPERS ============
@@ -68,94 +73,101 @@ const maskmasked_pan = (num: string) =>
   num.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1-$2-$3-$4');
 
 // ============ COMPONENTS ============
-const BankCard = ({ card }: { card: BankCardType }) => (
-  <Card
-    sx={{
-      minWidth: 280,
-      width: 280,
-      height: 160,
-      borderRadius: 3,
-      background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}99 100%)`,
-      color: 'white',
-      position: 'relative',
-      overflow: 'hidden',
-      flexShrink: 0,
-    }}
-  >
-    <Box
-      sx={{
-        position: 'absolute',
-        top: -30,
-        right: -30,
-        width: 100,
-        height: 100,
-        borderRadius: '50%',
-        bgcolor: 'rgba(255,255,255,0.1)',
-      }}
-    />
-    <Box
-      sx={{
-        position: 'absolute',
-        bottom: -20,
-        left: -20,
-        width: 80,
-        height: 80,
-        borderRadius: '50%',
-        bgcolor: 'rgba(255,255,255,0.1)',
-      }}
-    />
-    <CardContent
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        p: 2.5,
-      }}
-    >
-      <Box
+const BankCard = ({ card }: { card: BankCardType }) => {
+  const navigate = useNavigate();
+  return (
+    <Button onClick={() => navigate(paths.app.scan.getHref(card.id))}>
+      <Card
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          minWidth: 280,
+          width: 280,
+          height: 160,
+          borderRadius: 3,
+          background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}99 100%)`,
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+          flexShrink: 0,
         }}
       >
-        <Typography sx={{ fontSize: 12, opacity: 0.9 }}>
-          {card.exp_year}
-        </Typography>
-        <Typography fontWeight="600" fontSize={14}>
-          {card.brand}
-        </Typography>
-      </Box>
-      <Typography
-        sx={{
-          fontFamily: 'monospace',
-          fontSize: 16,
-          letterSpacing: 2,
-          textAlign: 'center',
-          direction: 'ltr',
-        }}
-      >
-        {maskmasked_pan(card.masked_pan)}
-      </Typography>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <CreditCard sx={{ opacity: 0.7 }} />
-        <Box sx={{ textAlign: 'left' }}>
-          <Typography sx={{ fontSize: 11, opacity: 0.8 }}>موجودی</Typography>
-          <Typography fontWeight="bold" fontSize={15}>
-            {formatNumber(card.balance)} ریال
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -30,
+            right: -30,
+            width: 100,
+            height: 100,
+            borderRadius: '50%',
+            bgcolor: 'rgba(255,255,255,0.1)',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: -20,
+            left: -20,
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            bgcolor: 'rgba(255,255,255,0.1)',
+          }}
+        />
+        <CardContent
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            p: 2.5,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography sx={{ fontSize: 12, opacity: 0.9 }}>
+              {card.exp_year}
+            </Typography>
+            <Typography fontWeight="600" fontSize={14}>
+              {card.brand}
+            </Typography>
+          </Box>
+          <Typography
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: 16,
+              letterSpacing: 2,
+              textAlign: 'center',
+              direction: 'ltr',
+            }}
+          >
+            {maskmasked_pan(card.masked_pan)}
           </Typography>
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-);
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <CreditCard sx={{ opacity: 0.7 }} />
+            <Box sx={{ textAlign: 'left' }}>
+              <Typography sx={{ fontSize: 11, opacity: 0.8 }}>
+                موجودی
+              </Typography>
+              <Typography fontWeight="bold" fontSize={15}>
+                {formatNumber(card.balance)} ریال
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Button>
+  );
+};
 
 const AddCardButton = ({ onClick }: { onClick: () => void }) => (
   <Card
@@ -208,7 +220,7 @@ const CardSkeleton = () => (
 );
 
 const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
-  const isPositive = transaction.amount > 0;
+  const isPositive = transaction.status.toLowerCase() == 'confirmed';
   const statusConfig = {
     confirmed: {
       icon: <CheckCircle sx={{ fontSize: 18 }} />,
@@ -257,10 +269,11 @@ const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
         py: 2,
         borderBottom: '1px solid #F1F5F9',
         border: '2px solid ',
-        borderColor: alpha(status.color, 0.2), // 10% opacity,
+        borderColor: alpha(status.color, 0.5), // 10% opacity,
         borderRadius: '16px',
         padding: '8px',
-        backgroundColor: alpha(status.color, 0.1), // 10% opacity
+        marginY: 1,
+        backgroundColor: alpha(status.color, 0.2), // 10% opacity
       }}
     >
       <Avatar
@@ -316,7 +329,12 @@ const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
           }}
         >
           {status.icon}
-          <Typography fontSize={11}>{status.label}</Typography>
+          <Typography
+            sx={{ color: isPositive ? '#22C55E' : '#EF4444' }}
+            fontSize={11}
+          >
+            {status.label}{' '}
+          </Typography>
         </Box>
       </Box>
     </Box>
@@ -429,13 +447,13 @@ export const PaymentsPage = () => {
           maxWidth: '100%',
         }}
       >
-        <Button
+        {/* <Button
           variant="outlined"
           onClick={() => navigate(paths.app.scan.getHref())}
           sx={{ borderRadius: 2 }}
         >
           اسکن QR برای پرداخت
-        </Button>
+        </Button> */}
       </Box>
       {/* Cards Section */}
       <Paper
@@ -496,12 +514,12 @@ export const PaymentsPage = () => {
             mb: 2,
           }}
         >
-          <Button size="small" sx={{ color: '#1E88E5' }}>
-            مشاهده همه
-          </Button>
           <Typography variant="h6" fontWeight="600" sx={{ color: '#1a1a1a' }}>
             تراکنش‌های اخیر
           </Typography>
+          <Button size="small" sx={{ color: '#1E88E5' }}>
+            مشاهده همه
+          </Button>
         </Box>
         <Divider sx={{ mb: 2 }} />
         {loadingTx ? (
@@ -525,21 +543,24 @@ export const AddCardPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    masked_pan: '',
-    exp_year: '',
+    card_number: '',
+    expiry: '',
     brand: '',
     cvv: '',
+    set_efault: '',
   });
 
   const handleSubmit = async () => {
-    if (!form.masked_pan || !form.exp_year) return;
+    if (!form.card_number || !form.expiry) return;
 
     setLoading(true);
+    console.log('addCard:', form);
     try {
       await api.addCard({
         ...form,
         balance: 0,
-        color: '#6366F1',
+        // color: '#6366F1',
+        color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`,
       });
       navigate(paths.app.payment.getHref());
     } catch (e) {
@@ -563,20 +584,20 @@ export const AddCardPage = () => {
       <Divider sx={{ mb: 3 }} />
 
       <Box sx={{ maxWidth: 400 }}>
-        <TextField
+        {/* <TextField
           fullWidth
           label="نام بانک"
           placeholder="مثال: بانک ملت"
           value={form.brand}
           onChange={(e) => setForm({ ...form, brand: e.target.value })}
           sx={{ mb: 3 }}
-        />
+        /> */}
         <TextField
           fullWidth
           label="شماره کارت"
           placeholder="xxxx-xxxx-xxxx-xxxx"
-          value={form.masked_pan}
-          onChange={(e) => setForm({ ...form, masked_pan: e.target.value })}
+          value={form.card_number}
+          onChange={(e) => setForm({ ...form, card_number: e.target.value })}
           sx={{ mb: 3 }}
           inputProps={{ style: { direction: 'ltr', textAlign: 'left' } }}
         />
@@ -593,8 +614,8 @@ export const AddCardPage = () => {
           fullWidth
           label="تاریخ انقضا"
           placeholder="1404/06"
-          value={form.exp_year}
-          onChange={(e) => setForm({ ...form, exp_year: e.target.value })}
+          value={form.expiry}
+          onChange={(e) => setForm({ ...form, expiry: e.target.value })}
           sx={{ mb: 3 }}
           inputProps={{ style: { direction: 'ltr', textAlign: 'left' } }}
         />

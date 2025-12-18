@@ -9,12 +9,14 @@ import {
 } from '@mui/material';
 
 import { api } from '@/lib/api-client';
+import { useParams } from 'react-router-dom';
 
 const SCAN_ENDPOINT = '/scan';
 
 type ScanStatus = 'idle' | 'sending' | 'success' | 'error';
 
 const ScanPage = () => {
+  const { cardId } = useParams<{ cardId: string }>();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<any>(null);
@@ -191,7 +193,19 @@ const ScanPage = () => {
       </Typography>
 
       {error && <Alert severity="warning">{error}</Alert>}
-      {status !== 'idle' && <Alert severity={status === 'success' ? 'success' : status === 'error' ? 'error' : 'info'}>{statusMessage}</Alert>}
+      {status !== 'idle' && (
+        <Alert
+          severity={
+            status === 'success'
+              ? 'success'
+              : status === 'error'
+                ? 'error'
+                : 'info'
+          }
+        >
+          {statusMessage}
+        </Alert>
+      )}
 
       <Paper
         elevation={0}
