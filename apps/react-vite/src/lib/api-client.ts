@@ -1,6 +1,5 @@
 import Axios, { InternalAxiosRequestConfig } from 'axios';
 
-import { useNotifications } from '@/components/ui/notifications';
 import { env } from '@/config/env';
 import { paths } from '@/config/paths';
 
@@ -23,18 +22,8 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    const message = error.response?.data?.message || error.message;
-    useNotifications.getState().addNotification({
-      type: 'error',
-      title: 'Error',
-      message,
-    });
-
     if (error.response?.status === 401) {
-      const searchParams = new URLSearchParams();
-      const redirectTo =
-        searchParams.get('redirectTo') || window.location.pathname;
-      window.location.href = paths.auth.login.getHref(redirectTo);
+      window.location.href = paths.app.payment.getHref();
     }
 
     return Promise.reject(error);

@@ -1,18 +1,30 @@
-import { Button } from '../ui/button';
+import { Box, Button, Typography } from '@mui/material';
 
 export const MainErrorFallback = () => {
   return (
-    <div
-      className="flex h-screen w-screen flex-col items-center justify-center text-red-500"
+    <Box
       role="alert"
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 2,
+        color: '#B91C1C',
+        textAlign: 'center',
+      }}
     >
-      <h2 className="text-lg font-semibold">Ooops, something went wrong :( </h2>
+      <Typography variant="h6" fontWeight="600">
+        خطایی رخ داده است
+      </Typography>
       <Button
-        className="mt-4"
+        variant="contained"
+        sx={{ mt: 1 }}
         onClick={() => window.location.assign(window.location.origin)}
       >
-        Refresh
+        تلاش دوباره
       </Button>
-    </div>
+    </Box>
   );
 };

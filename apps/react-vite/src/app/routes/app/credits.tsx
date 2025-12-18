@@ -1,17 +1,16 @@
 import { Box, Typography } from '@mui/material';
 
-const ProfileRoute = () => {
+const CreditsRoute = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h6" fontWeight="600">
-        پروفایل من
+        اعتبارهای من
       </Typography>
       <Typography sx={{ color: 'text.secondary' }}>
-        اطلاعات پروفایل شما در این بخش نمایش داده می‌شود. می‌توانید جزئیات
-        تکمیلی را اینجا اضافه کنید.
+        در این بخش می‌توانید وضعیت اعتبارهای فعال خود را مشاهده کنید.
       </Typography>
     </Box>
   );
 };
 
-export default ProfileRoute;
+export default CreditsRoute;

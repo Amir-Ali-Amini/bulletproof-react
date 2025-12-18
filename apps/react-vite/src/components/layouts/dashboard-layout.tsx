@@ -1,38 +1,24 @@
-// export function DashboardLayout({ children }: { children: React.ReactNode }) {
-//   return (
-//     <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-//       {children}
-//     </main>
-//   );
-// }
-// export function DashboardLayout({ children }: { children: React.ReactNode }) {
-//   return (
-//     <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-//       {children}
-//     </main>
-//   );
-// }
-import { useState, createContext, useContext } from 'react';
+import { PropsWithChildren, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Box,
   AppBar,
   Toolbar,
   Typography,
   TextField,
   InputAdornment,
-  Button,
   IconButton,
+  Button,
+  Box,
   Paper,
+  Avatar,
+  Divider,
+  CssBaseline,
+  ThemeProvider,
+  createTheme,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Avatar,
-  Divider,
-  Link,
-  CssBaseline,
-  ThemeProvider,
-  createTheme,
   BottomNavigation,
   BottomNavigationAction,
   useMediaQuery,
@@ -40,26 +26,23 @@ import {
 import {
   Search,
   Person,
-  ChevronLeft,
-  CardGiftcard,
-  CreditCard,
-  CalendarMonth,
-  Description,
-  AccountBalanceWallet,
-  Receipt,
-  ReceiptLong,
-  Autorenew,
   HelpOutline,
   Logout,
-  FolderOpen,
+  ChevronLeft,
   Home,
   Store,
-  ArrowForward,
+  CreditCard,
+  ArrowBack,
+  Menu as MenuIcon,
+  CameraAlt,
 } from '@mui/icons-material';
-import rtlPlugin from 'stylis-plugin-rtl';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { prefixer } from 'stylis';
+import rtlPlugin from 'stylis-plugin-rtl';
+
+import { DASHBOARD_NAV_ITEMS, NAV_LINKS } from './navbar';
+import { paths } from '@/config/paths';
 
 const cacheRtl = createCache({
   key: 'muirtl',
@@ -78,414 +61,44 @@ const theme = createTheme({
   },
 });
 
-// ============ DATA ============
-const menuItemsData = [
+const MOBILE_SHORTCUTS = [
   {
-    icon: <CardGiftcard />,
-    label: 'فرصت‌های ویژه',
-    id: 'offers',
-    path: '/offers',
+    id: 'home',
+    label: 'خانه',
+    path: paths.app.payment.getHref(),
+    icon: <Home />,
   },
   {
-    icon: <CreditCard />,
-    label: 'اعتبارهای من',
+    id: 'profile',
+    label: 'پروفایل',
+    path: paths.app.profile.getHref(),
+    icon: <Person />,
+  },
+  {
+    id: 'in-person',
+    label: 'خرید حضوری',
+    path: paths.app.inPerson.getHref(),
+    icon: <Store />,
+  },
+  {
     id: 'credits',
-    path: '/credits',
+    label: 'اعتبارهای من',
+    path: paths.app.credits.getHref(),
+    icon: <CreditCard />,
   },
   {
-    icon: <CalendarMonth />,
-    label: 'قسط‌های من',
-    id: 'installments',
-    path: '/installments',
-  },
-  {
-    icon: <Description />,
-    label: 'درخواست‌های من',
-    id: 'requests',
-    path: '/requests',
-  },
-  {
-    icon: <AccountBalanceWallet />,
-    label: 'کیف پول نقدی',
-    id: 'wallet',
-    path: '/wallet',
-  },
-  {
-    icon: <Receipt />,
-    label: 'تراکنش های من',
-    id: 'transactions',
-    path: '/transactions',
-  },
-  {
-    icon: <ReceiptLong />,
-    label: 'خرید های نقدی',
-    id: 'cash-payments',
-    path: 'cash-payments',
-  },
-  {
-    icon: <Autorenew />,
-    label: 'پرداخت خودکار',
-    id: 'autopay',
-    path: '/autopay',
+    id: 'scan',
+    label: 'اسکن QR',
+    path: paths.app.scan.getHref(),
+    icon: <CameraAlt />,
   },
 ];
 
-const navLinksData = [
-  'دسته‌بندی‌ها',
-  'فروشگاه‌ها',
-  'خرید حضوری',
-  'ثبت‌نام فروشگاه',
-  'تماس با ما',
-  'درباره ما',
-];
-
-const pageConfig = {
-  '/offers': {
-    title: 'فرصت‌های ویژه',
-    emptyTitle: 'فرصتی موجود نیست',
-    emptyDesc: 'فرصت‌های ویژه در این قسمت نمایش داده می‌شود.',
-  },
-  '/credits': {
-    title: 'اعتبارهای من',
-    emptyTitle: 'اعتباری ندارید',
-    emptyDesc: 'اعتبارهای شما در این قسمت نمایش داده می‌شود.',
-  },
-  '/installments': {
-    title: 'قسط‌های من',
-    emptyTitle: 'قسطی ندارید',
-    emptyDesc: 'قسط‌های شما در این قسمت نمایش داده می‌شود.',
-  },
-  '/requests': {
-    title: 'درخواست‌های من',
-    emptyTitle: 'درخواستی ندارید',
-    emptyDesc: 'درخواست‌های شما در این قسمت نمایش داده می‌شود.',
-  },
-  '/wallet': {
-    title: 'کیف پول نقدی',
-    emptyTitle: 'کیف پول خالی است',
-    emptyDesc: 'موجودی کیف پول شما در این قسمت نمایش داده می‌شود.',
-  },
-  '/transactions': {
-    title: 'تراکنش‌های من',
-    emptyTitle: 'هنوز تراکنشی ندارید',
-    emptyDesc:
-      'تراکنش‌های مربوط به اعتبار و خرید شما در این قسمت نمایش داده می‌شود.',
-  },
-  '/autopay': {
-    title: 'پرداخت خودکار',
-    emptyTitle: 'پرداخت خودکاری ندارید',
-    emptyDesc: 'پرداخت‌های خودکار شما در این قسمت نمایش داده می‌شود.',
-  },
+type NavigationProps = {
+  activePath: string;
+  onNavigate: (path: string) => void;
 };
 
-const RouterContext = createContext({
-  currentPath: '/transactions',
-  navigate: () => {},
-});
-const useRouter = () => useContext(RouterContext);
-
-// ============ EMPTY STATE ============
-const EmptyState = ({ title, description }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      py: 10,
-    }}
-  >
-    <Box
-      sx={{
-        width: 100,
-        height: 100,
-        borderRadius: '50%',
-        bgcolor: '#E8F4FD',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        mb: 3,
-      }}
-    >
-      <FolderOpen sx={{ fontSize: 50, color: '#90CAF9' }} />
-    </Box>
-    <Typography
-      variant="subtitle1"
-      fontWeight="600"
-      sx={{ mb: 1, color: '#1a1a1a' }}
-    >
-      {title}
-    </Typography>
-    <Typography
-      variant="body2"
-      sx={{ color: '#6B7280', textAlign: 'center', maxWidth: 300 }}
-    >
-      {description}
-    </Typography>
-  </Box>
-);
-
-// ============ MOBILE COMPONENTS ============
-const MobileHeader = ({ title, showBack, onBack }) => (
-  <AppBar
-    position="static"
-    color="inherit"
-    elevation={0}
-    sx={{ bgcolor: 'white', borderBottom: '1px solid #E5E7EB' }}
-  >
-    <Toolbar sx={{ minHeight: 56 }}>
-      <Typography
-        variant="h6"
-        sx={{ flexGrow: 1, color: '#1E88E5', fontWeight: 600, fontSize: 16 }}
-      >
-        {title}
-      </Typography>
-      {showBack && (
-        <IconButton onClick={onBack} sx={{ color: '#374151' }}>
-          <ArrowForward />
-        </IconButton>
-      )}
-    </Toolbar>
-  </AppBar>
-);
-
-const MobileBottomNav = () => {
-  const { currentPath, navigate } = useRouter();
-  const navValue =
-    currentPath === '/profile' ? 0 : currentPath === '/credits' ? 1 : 3;
-
-  return (
-    <Paper
-      sx={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        borderTop: '1px solid #E5E7EB',
-      }}
-      elevation={0}
-    >
-      <BottomNavigation value={navValue} sx={{ bgcolor: 'white', height: 64 }}>
-        <BottomNavigationAction
-          label="خانه"
-          icon={<Home />}
-          onClick={() => navigate('/home')}
-          sx={{ color: '#6B7280' }}
-        />
-        <BottomNavigationAction
-          label="خرید حضوری"
-          icon={<Store />}
-          onClick={() => navigate('/in-person')}
-          sx={{ color: '#6B7280' }}
-        />
-        <BottomNavigationAction
-          label={
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                color: '#0D9488',
-              }}
-            >
-              <CreditCard sx={{ fontSize: 18 }} />
-              <span style={{ fontSize: 11 }}>۱۰۰ میلیون</span>
-            </Box>
-          }
-          icon={null}
-          onClick={() => navigate('/credits')}
-          sx={{ '& .MuiBottomNavigationAction-label': { opacity: 1 } }}
-        />
-        <BottomNavigationAction
-          label="پروفایل"
-          icon={<Person />}
-          onClick={() => navigate('/profile')}
-          sx={{ color: '#6B7280', '&.Mui-selected': { color: '#1E88E5' } }}
-        />
-      </BottomNavigation>
-    </Paper>
-  );
-};
-
-const NotificationBanner = ({ onDismiss }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      m: 2,
-      p: 2,
-      bgcolor: '#EFF6FF',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-      borderRadius: 3,
-    }}
-  >
-    <Avatar
-      sx={{
-        bgcolor: '#1E88E5',
-        width: 44,
-        height: 44,
-        fontWeight: 'bold',
-        fontSize: 18,
-      }}
-    >
-      ā
-    </Avatar>
-    <Typography
-      variant="body2"
-      sx={{ flexGrow: 1, color: '#374151', fontSize: 13 }}
-    >
-      مایلید از رویدادها و پیشنهادات ویژه مطلع شوید؟
-    </Typography>
-    <Box sx={{ display: 'flex', gap: 1 }}>
-      <Button
-        size="small"
-        onClick={onDismiss}
-        sx={{
-          bgcolor: '#E5E7EB',
-          color: '#374151',
-          fontSize: 12,
-          px: 2,
-          borderRadius: 2,
-          '&:hover': { bgcolor: '#D1D5DB' },
-        }}
-      >
-        قبول می‌کنم
-      </Button>
-      <Button
-        size="small"
-        onClick={onDismiss}
-        sx={{ color: '#6B7280', fontSize: 12 }}
-      >
-        بعدا بپرس
-      </Button>
-    </Box>
-  </Paper>
-);
-
-const MobileMenuItem = ({ item, onClick }) => (
-  <ListItemButton
-    onClick={onClick}
-    sx={{ py: 2, px: 2, borderBottom: '1px solid #F3F4F6' }}
-  >
-    <ListItemIcon sx={{ minWidth: 32, color: '#1E88E5' }}>
-      {item.icon}
-    </ListItemIcon>
-    <ListItemText
-      primary={item.label}
-      sx={{ '& .MuiTypography-root': { color: '#374151', fontSize: 14 } }}
-    />
-    <ChevronLeft sx={{ color: '#9CA3AF', fontSize: 20 }} />
-  </ListItemButton>
-);
-
-const MobileProfilePage = () => {
-  const { navigate } = useRouter();
-  const [showBanner, setShowBanner] = useState(true);
-
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#F5F5F5', pb: 10 }}>
-      <MobileHeader title="پروفایل من" showBack={false} />
-      {showBanner && (
-        <NotificationBanner onDismiss={() => setShowBanner(false)} />
-      )}
-
-      <Paper elevation={0} sx={{ mt: 2, borderRadius: 0 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            p: 2,
-            flexDirection: 'row-reverse',
-          }}
-        >
-          <Avatar sx={{ bgcolor: '#F3F4F6', width: 40, height: 40 }}>
-            <Person sx={{ color: '#9CA3AF' }} />
-          </Avatar>
-          <Typography
-            sx={{
-              flexGrow: 1,
-              textAlign: 'left',
-              color: '#6B7280',
-              fontSize: 14,
-            }}
-            dir="ltr"
-          >
-            0912xxxxxxxx
-          </Typography>
-        </Box>
-      </Paper>
-
-      <Paper elevation={0} sx={{ mt: 2, borderRadius: 0 }}>
-        <List disablePadding>
-          {menuItemsData.map((item) => (
-            <MobileMenuItem
-              key={item.id}
-              item={item}
-              onClick={() => navigate(item.path)}
-            />
-          ))}
-        </List>
-      </Paper>
-
-      <Paper elevation={0} sx={{ mt: 2, borderRadius: 0 }}>
-        <ListItemButton
-          sx={{
-            py: 2,
-            px: 2,
-            borderBottom: '1px solid #F3F4F6',
-            display: 'flex',
-            flexDirection: 'row-reverse',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <HelpOutline sx={{ color: '#6B7280' }} />
-            <Typography sx={{ color: '#374151', fontSize: 14 }}>
-              راهنما و پشتیبانی
-            </Typography>
-          </Box>
-          <Box sx={{ flexGrow: 1 }} />
-          <ChevronLeft sx={{ color: '#9CA3AF', fontSize: 20 }} />
-        </ListItemButton>
-        <ListItemButton
-          sx={{ py: 2, px: 2, display: 'flex', flexDirection: 'row-reverse' }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Logout sx={{ color: '#EF4444' }} />
-            <Typography sx={{ color: '#EF4444', fontSize: 14 }}>
-              خروج
-            </Typography>
-          </Box>
-        </ListItemButton>
-      </Paper>
-    </Box>
-  );
-};
-
-const MobileContentPage = ({ config }) => {
-  const { navigate } = useRouter();
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#F5F5F5', pb: 10 }}>
-      <MobileHeader
-        title={config.title}
-        showBack
-        onBack={() => navigate('/profile')}
-      />
-      <Box sx={{ p: 2 }}>
-        <Paper elevation={0} sx={{ borderRadius: 3, p: 3 }}>
-          <EmptyState
-            title={config.emptyTitle}
-            description={config.emptyDesc}
-          />
-        </Paper>
-      </Box>
-    </Box>
-  );
-};
-
-// ============ DESKTOP COMPONENTS ============
 const DesktopHeader = () => (
   <AppBar
     position="static"
@@ -564,19 +177,20 @@ const DesktopSecondaryNav = () => (
       }}
     >
       <Box sx={{ display: 'flex', gap: 4 }}>
-        {navLinksData.map((link) => (
-          <Link
+        {NAV_LINKS.map((link) => (
+          <Typography
             key={link}
+            component="a"
             href="#"
-            underline="none"
             sx={{
               color: '#4B5563',
               fontSize: 13,
+              textDecoration: 'none',
               '&:hover': { color: '#1E88E5' },
             }}
           >
             {link}
-          </Link>
+          </Typography>
         ))}
       </Box>
       <Typography variant="body2" sx={{ color: '#6B7280', fontSize: 13 }}>
@@ -586,187 +200,255 @@ const DesktopSecondaryNav = () => (
   </Box>
 );
 
-const DesktopSidebar = () => {
-  const { currentPath, navigate } = useRouter();
-
-  return (
-    <Paper
-      elevation={0}
+const DesktopSidebar = ({ activePath, onNavigate }: NavigationProps) => (
+  <Paper
+    elevation={0}
+    sx={{
+      width: 280,
+      borderRadius: 3,
+      p: 2,
+      flexShrink: 0,
+      height: 'fit-content',
+      border: '1px solid #E5E7EB',
+    }}
+  >
+    <Box
       sx={{
-        width: 280,
-        borderRadius: 3,
-        p: 2,
-        flexShrink: 0,
-        height: 'fit-content',
-        border: '1px solid #E5E7EB',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        pb: 2,
+        mb: 2,
+        borderBottom: '1px solid #F3F4F6',
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          pb: 2,
-          mb: 2,
-          borderBottom: '1px solid #F3F4F6',
-        }}
-      >
-        <Box sx={{ position: 'relative' }}>
-          <Avatar sx={{ width: 44, height: 44, bgcolor: '#F3F4F6' }}>
-            <Person sx={{ color: '#9CA3AF' }} />
-          </Avatar>
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 2,
-              left: 2,
-              width: 10,
-              height: 10,
-              bgcolor: '#22C55E',
-              borderRadius: '50%',
-              border: '2px solid white',
-            }}
-          />
-        </Box>
-        <Typography sx={{ flex: 1, color: '#6B7280', fontSize: 14 }}>
-          ۰۹۱۲۹۳۴۲۸۹۰
-        </Typography>
-        <IconButton size="small" sx={{ color: '#1E88E5' }}>
-          <ChevronLeft />
-        </IconButton>
-      </Box>
-
-      <List disablePadding>
-        {menuItemsData.map((item) => {
-          const isActive = currentPath === item.path;
-          return (
-            <ListItemButton
-              key={item.id}
-              onClick={() => navigate(item.path)}
-              sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                py: 1.5,
-                bgcolor: isActive ? '#1E88E5' : 'transparent',
-                '&:hover': { bgcolor: isActive ? '#1976D2' : '#F3F4F6' },
-              }}
-            >
-              <ListItemIcon
-                sx={{ minWidth: 32, color: isActive ? 'white' : '#1E88E5' }}
-              >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                sx={{
-                  '& .MuiTypography-root': {
-                    fontSize: 14,
-                    color: isActive ? 'white' : '#374151',
-                  },
-                }}
-              />
-            </ListItemButton>
-          );
-        })}
-      </List>
-
-      <Divider sx={{ my: 2 }} />
-
-      <List disablePadding>
-        <ListItemButton sx={{ borderRadius: 2, py: 1.5 }}>
-          <ListItemIcon sx={{ minWidth: 32 }}>
-            <HelpOutline sx={{ color: '#6B7280' }} />
-          </ListItemIcon>
-          <ListItemText
-            primary="راهنما و پشتیبانی"
-            sx={{ '& .MuiTypography-root': { fontSize: 14, color: '#374151' } }}
-          />
-        </ListItemButton>
-        <ListItemButton sx={{ borderRadius: 2, py: 1.5 }}>
-          <ListItemIcon sx={{ minWidth: 32 }}>
-            <Logout sx={{ color: '#EF4444' }} />
-          </ListItemIcon>
-          <ListItemText
-            primary="خروج"
-            sx={{ '& .MuiTypography-root': { fontSize: 14, color: '#EF4444' } }}
-          />
-        </ListItemButton>
-      </List>
-    </Paper>
-  );
-};
-
-const DesktopContent = ({ config }) => (
-  <Box sx={{ flex: 1 }}>
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: 3,
-        p: 4,
-        border: '1px solid #E5E7EB',
-        minHeight: 500,
-      }}
-    >
-      <Typography
-        variant="h6"
-        fontWeight="600"
-        sx={{ mb: 2, color: '#1a1a1a', textAlign: 'right' }}
-      >
-        {config.title}
+      <Avatar sx={{ width: 44, height: 44, bgcolor: '#F3F4F6' }}>
+        <Person sx={{ color: '#9CA3AF' }} />
+      </Avatar>
+      <Typography sx={{ flex: 1, color: '#6B7280', fontSize: 14 }}>
+        حساب کاربری
       </Typography>
-      <Divider sx={{ mb: 2 }} />
-      <EmptyState title={config.emptyTitle} description={config.emptyDesc} />
-    </Paper>
-  </Box>
+      <IconButton size="small" sx={{ color: '#1E88E5' }}>
+        <ChevronLeft />
+      </IconButton>
+    </Box>
+
+    <List disablePadding>
+      {DASHBOARD_NAV_ITEMS.map((item) => {
+        const isActive = activePath === item.path;
+        return (
+          <ListItemButton
+            key={item.id}
+            onClick={() => onNavigate(item.path)}
+            sx={{
+              borderRadius: 2,
+              mb: 0.5,
+              py: 1.5,
+              bgcolor: isActive ? '#1E88E5' : 'transparent',
+              '&:hover': { bgcolor: isActive ? '#1976D2' : '#F3F4F6' },
+            }}
+          >
+            <ListItemIcon
+              sx={{ minWidth: 32, color: isActive ? 'white' : '#1E88E5' }}
+            >
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText
+              primary={item.label}
+              sx={{
+                '& .MuiTypography-root': {
+                  fontSize: 14,
+                  color: isActive ? 'white' : '#374151',
+                },
+              }}
+            />
+          </ListItemButton>
+        );
+      })}
+    </List>
+
+    <Divider sx={{ my: 2 }} />
+
+    <List disablePadding>
+      <ListItemButton sx={{ borderRadius: 2, py: 1.5 }}>
+        <ListItemIcon sx={{ minWidth: 32 }}>
+          <HelpOutline sx={{ color: '#6B7280' }} />
+        </ListItemIcon>
+        <ListItemText
+          primary="راهنما و پشتیبانی"
+          sx={{ '& .MuiTypography-root': { fontSize: 14, color: '#374151' } }}
+        />
+      </ListItemButton>
+      <ListItemButton sx={{ borderRadius: 2, py: 1.5 }}>
+        <ListItemIcon sx={{ minWidth: 32 }}>
+          <Logout sx={{ color: '#EF4444' }} />
+        </ListItemIcon>
+        <ListItemText
+          primary="خروج"
+          sx={{ '& .MuiTypography-root': { fontSize: 14, color: '#EF4444' } }}
+        />
+      </ListItemButton>
+    </List>
+  </Paper>
 );
 
-// ============ MAIN APP ============
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [currentPath, setCurrentPath] = useState('/transactions');
+type MobileHeaderProps = {
+  showMenu: boolean;
+  onToggleMenu: () => void;
+};
+
+const MobileHeader = ({ showMenu, onToggleMenu }: MobileHeaderProps) => (
+  <AppBar
+    position="static"
+    color="inherit"
+    elevation={0}
+    sx={{ bgcolor: 'white', borderBottom: '1px solid #E5E7EB' }}
+  >
+    <Toolbar sx={{ minHeight: 56 }}>
+      <Typography
+        variant="h6"
+        sx={{ flexGrow: 1, color: '#1E88E5', fontWeight: 600, fontSize: 16 }}
+      >
+        {showMenu ? 'منوی اصلی' : 'پنل کاربری'}
+      </Typography>
+      <IconButton sx={{ color: '#1E88E5' }} onClick={onToggleMenu}>
+        {showMenu ? <ArrowBack /> : <MenuIcon />}
+      </IconButton>
+    </Toolbar>
+  </AppBar>
+);
+
+const MobileMenu = ({
+  onNavigate,
+}: {
+  onNavigate: (path: string) => void;
+}) => (
+  <Paper elevation={0} sx={{ mt: 2, borderRadius: 3 }}>
+    <List disablePadding>
+      {DASHBOARD_NAV_ITEMS.map((item) => (
+        <ListItemButton
+          key={item.id}
+          onClick={() => onNavigate(item.path)}
+          sx={{ borderBottom: '1px solid #F3F4F6' }}
+        >
+          <ListItemIcon sx={{ minWidth: 36, color: '#1E88E5' }}>
+            {item.icon}
+          </ListItemIcon>
+          <ListItemText primary={item.label} />
+          <ChevronLeft sx={{ color: '#CBD5F5' }} />
+        </ListItemButton>
+      ))}
+    </List>
+  </Paper>
+);
+
+const MobileBottomNav = ({ activePath, onNavigate }: NavigationProps) => (
+  <Paper
+    sx={{
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000,
+      borderTop: '1px solid #E5E7EB',
+    }}
+    elevation={0}
+  >
+    <BottomNavigation
+      value={activePath}
+      onChange={(_, value) => onNavigate(value)}
+      sx={{ bgcolor: 'white', height: 64 }}
+    >
+      {MOBILE_SHORTCUTS.map((item) => (
+        <BottomNavigationAction
+          key={item.id}
+          label={item.label}
+          icon={item.icon}
+          value={item.path}
+          sx={{ '&.Mui-selected': { color: '#1E88E5' } }}
+        />
+      ))}
+    </BottomNavigation>
+  </Paper>
+);
+
+export function DashboardLayout({ children }: PropsWithChildren) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width:900px)');
-  const navigate = (path) => setCurrentPath(path);
-  const config = pageConfig[currentPath] || pageConfig['/transactions'];
-  const isProfilePage = currentPath === '/profile';
+  const activePath = location.pathname;
+  const [showMenu, setShowMenu] = useState(false);
+
+  const handleNavigate = (path: string) => {
+    if (path !== activePath) {
+      navigate(path);
+    }
+  };
+
+  const handleMenuToggle = () => setShowMenu((prev) => !prev);
+
+  const handleMenuNavigate = (path: string) => {
+    handleNavigate(path);
+    setShowMenu(false);
+  };
 
   return (
     <CacheProvider value={cacheRtl}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <RouterContext.Provider value={{ currentPath, navigate }}>
-          <Box dir="rtl" sx={{ minHeight: '100vh', bgcolor: '#EFF6FF' }}>
-            {isMobile ? (
-              <>
-                {isProfilePage ? (
-                  <MobileProfilePage />
-                ) : (
-                  <MobileContentPage config={config} />
-                )}
-                <MobileBottomNav />
-              </>
-            ) : (
-              <>
-                <DesktopHeader />
-                <DesktopSecondaryNav />
-                <Box
+        <Box dir="rtl" sx={{ minHeight: '100vh', bgcolor: '#EFF6FF' }}>
+          {isMobile ? (
+            <>
+              <MobileHeader
+                showMenu={showMenu}
+                onToggleMenu={handleMenuToggle}
+              />
+              {showMenu ? (
+                <Box sx={{ p: 2, pb: 10 }}>
+                  <MobileMenu onNavigate={handleMenuNavigate} />
+                </Box>
+              ) : (
+                <Box sx={{ p: 2, pb: 10 }}>{children}</Box>
+              )}
+              <MobileBottomNav
+                activePath={activePath}
+                onNavigate={handleMenuNavigate}
+              />
+            </>
+          ) : (
+            <>
+              <DesktopHeader />
+              <DesktopSecondaryNav />
+              <Box
+                sx={{
+                  maxWidth: 1280,
+                  mx: 'auto',
+                  p: 3,
+                  display: 'flex',
+                  gap: 3,
+                }}
+              >
+                <DesktopSidebar
+                  activePath={activePath}
+                  onNavigate={handleNavigate}
+                />
+                <Paper
+                  component="main"
+                  elevation={0}
                   sx={{
-                    maxWidth: 1280,
-                    mx: 'auto',
-                    p: 3,
-                    display: 'flex',
-                    gap: 3,
+                    flex: 1,
+                    borderRadius: 3,
+                    p: 4,
+                    border: '1px solid #E5E7EB',
+                    minHeight: 500,
                   }}
                 >
-                  <DesktopSidebar />
-                  {/* <DesktopContent config={config} />
-                   */}
-                  <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-                    {children}
-                  </main>
-                </Box>
-              </>
-            )}
-          </Box>
-        </RouterContext.Provider>
+                  {children}
+                </Paper>
+              </Box>
+            </>
+          )}
+        </Box>
       </ThemeProvider>
     </CacheProvider>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Box,
@@ -24,6 +25,8 @@ import {
   AccessTime,
 } from '@mui/icons-material';
 
+import { paths } from '@/config/paths';
+
 // ============ TYPES ============
 interface BankCardType {
   id: number;
@@ -43,19 +46,10 @@ interface TransactionType {
   category: string;
 }
 
-interface PaymentsPageProps {
-  onNavigate: (path: string) => void;
-}
-
-interface AddCardPageProps {
-  onNavigate: (path: string) => void;
-}
-
 // ============ API CALLS ============
-const API_BASE_URL = '/api'; // Change to your API base URL
-
+const API_BASE_URL = import.meta.env.API_BASE_URL;
 const api = {
-  getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/cards`),
+  getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/api/v1/cards`),
   getTransactions: () =>
     axios.get<TransactionType[]>(`${API_BASE_URL}/transactions`),
   addCard: (data: Partial<BankCardType>) =>
@@ -316,7 +310,8 @@ const TransactionSkeleton = () => (
 );
 
 // ============ PAYMENTS PAGE ============
-export const PaymentsPage = ({ onNavigate }: PaymentsPageProps) => {
+export const PaymentsPage = () => {
+  const navigate = useNavigate();
   const [cards, setCards] = useState<BankCardType[]>([]);
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -326,17 +321,19 @@ export const PaymentsPage = ({ onNavigate }: PaymentsPageProps) => {
     const fetchData = async () => {
       try {
         const cardsRes = await api.getCards();
-        setCards(cardsRes.data);
+        setCards(Array.isArray(cardsRes.data) ? cardsRes.data : []);
       } catch (e) {
         console.error('Error fetching cards:', e);
+        setCards([]);
       }
       setLoadingCards(false);
 
       try {
         const txRes = await api.getTransactions();
-        setTransactions(txRes.data);
+        setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
       } catch (e) {
         console.error('Error fetching transactions:', e);
+        setTransactions([]);
       }
       setLoadingTx(false);
     };
@@ -366,7 +363,9 @@ export const PaymentsPage = ({ onNavigate }: PaymentsPageProps) => {
             direction: 'ltr',
           }}
         >
-          <AddCardButton onClick={() => onNavigate('/add-card')} />
+          <AddCardButton
+            onClick={() => navigate(paths.app.addCard.getHref())}
+          />
           {loadingCards
             ? [...Array(2)].map((_, i) => <CardSkeleton key={i} />)
             : cards.map((card) => <BankCard key={card.id} card={card} />)}
@@ -411,12 +410,14 @@ export const PaymentsPage = ({ onNavigate }: PaymentsPageProps) => {
 };
 
 // ============ ADD CARD PAGE ============
-export const AddCardPage = ({ onNavigate }: AddCardPageProps) => {
+export const AddCardPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     cardNumber: '',
     expiry: '',
     bankName: '',
+    cvv: '',
   });
 
   const handleSubmit = async () => {
@@ -429,7 +430,7 @@ export const AddCardPage = ({ onNavigate }: AddCardPageProps) => {
         balance: 0,
         color: '#6366F1',
       });
-      onNavigate('/payments');
+      navigate(paths.app.payment.getHref());
     } catch (e) {
       console.error('Error adding card:', e);
     }
@@ -470,6 +471,15 @@ export const AddCardPage = ({ onNavigate }: AddCardPageProps) => {
         />
         <TextField
           fullWidth
+          label="cvv2"
+          placeholder="1234"
+          value={form.cvv}
+          onChange={(e) => setForm({ ...form, cvv: e.target.value })}
+          sx={{ mb: 3 }}
+          inputProps={{ style: { direction: 'ltr', textAlign: 'left' } }}
+        />
+        <TextField
+          fullWidth
           label="تاریخ انقضا"
           placeholder="1404/06"
           value={form.expiry}
@@ -493,7 +503,7 @@ export const AddCardPage = ({ onNavigate }: AddCardPageProps) => {
           </Button>
           <Button
             variant="outlined"
-            onClick={() => onNavigate('/payments')}
+            onClick={() => navigate(paths.app.payment.getHref())}
             sx={{ borderRadius: 2, px: 4 }}
           >
             انصراف
