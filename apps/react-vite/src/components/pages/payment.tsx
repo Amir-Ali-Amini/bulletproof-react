@@ -60,6 +60,7 @@ const api = {
     axios.get<BankCardType[]>(`${API_BASE_URL}/cards`, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'ngrok-skip-browser-warning': 'true',
         Pragma: 'no-cache',
       },
     }),
@@ -67,6 +68,7 @@ const api = {
     axios.get<TransactionType[]>(`${API_BASE_URL}/payments`, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'ngrok-skip-browser-warning': 'true',
         Pragma: 'no-cache',
       },
     }),
@@ -78,6 +80,7 @@ const api = {
       exp_month: month,
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'ngrok-skip-browser-warning': 'true',
         Pragma: 'no-cache',
       },
     });
@@ -312,7 +315,7 @@ const TransactionItem = ({ transaction }: { transaction: TransactionType }) => {
           fontSize={16}
           sx={{ color: isPositive ? '#146d35ff' : '#812424ff' }}
         >
-          {`فروشنده: ${transaction.merchant_name}`}
+          {`پذیرنده: ${transaction.merchant_name}`}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
           <Typography fontSize={12} sx={{ color: '#94A3B8' }}>

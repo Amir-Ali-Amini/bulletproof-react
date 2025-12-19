@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -10,8 +11,9 @@ import {
 } from '@mui/material';
 import { Cancel, CheckCircle, Lock } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
+import axios from 'axios';
 
-import { api } from '@/lib/api-client';
+import { api, DEFAULT_BASE_URL } from '@/lib/api-client';
 
 const SCAN_ENDPOINT = '/checkout/pending/confirm';
 const BARCODE_POLYFILL_URL =
@@ -20,7 +22,19 @@ const JSQR_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
 
 let barcodePolyfillPromise: Promise<boolean> | null = null;
 let jsQrLoaderPromise: Promise<boolean> | null = null;
-
+const sendNFC = (value: string) =>
+  axios.post(
+    `${DEFAULT_BASE_URL}${SCAN_ENDPOINT}`,
+    { card_id: value }, // data (body)
+    {
+      // config
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'ngrok-skip-browser-warning': 'true',
+        Pragma: 'no-cache',
+      },
+    },
+  );
 const ensureBarcodeDetector = async () => {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return false;
@@ -329,12 +343,14 @@ const ScanPage = () => {
   };
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  api.post(SCAN_ENDPOINT, 'test_endpoint');
+  // sendNFC(cardId);
+  // api.post(SCAN_ENDPOINT, 'test_endpoint', { headers: {} });
   const sendValueToApi = async (value: string) => {
     setStatus('sending');
     setStatusMessage('در حال ارسال به سرور...');
     try {
-      await api.post(SCAN_ENDPOINT, { value });
+      await sendNFC(value);
+      // await api.post(SCAN_ENDPOINT, { value });
 
       setStatus('success');
       setStatusMessage('کد با موفقیت ارسال شد.');
@@ -348,7 +364,8 @@ const ScanPage = () => {
     showNfcOverlay('pending', 'در حال ارسال درخواست به سرور...');
     try {
       // await new Promise((resolve) => setTimeout(resolve, 2500));
-      await api.post(SCAN_ENDPOINT, { value });
+      await sendNFC(value);
+      // await api.post(SCAN_ENDPOINT, { value });
       showNfcOverlay(
         'success',
         'کارت شما شناسایی شد، می‌توانید کارت را بردارید.',
@@ -380,6 +397,9 @@ const ScanPage = () => {
     startScanner();
   };
 
+  const handleNfcScanTest = async () => {
+    await confirmNfcSubmission(cardId);
+  };
   const handleNfcScan = async () => {
     setNfcError('');
     setNfcMessage('');
@@ -687,6 +707,9 @@ const ScanPage = () => {
             disabled={!isNfcSupported || isNfcScanning}
           >
             {isNfcScanning ? 'در انتظار کارت...' : 'شروع خواندن NFC'}
+          </Button>
+          <Button variant="outlined" onClick={handleNfcScanTest}>
+            {'تست NFC'}
           </Button>
         </Paper>
 

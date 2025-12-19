@@ -1,11 +1,17 @@
+// @ts-nocheck
 import Axios, { InternalAxiosRequestConfig } from 'axios';
 
 import { env } from '@/config/env';
 import { paths } from '@/config/paths';
 
 function authRequestInterceptor(config: InternalAxiosRequestConfig) {
-  config.headers = config.headers ?? {};
-  config.headers.Accept = 'application/json';
+  config.headers = {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'ngrok-skip-browser-warning': 'true',
+    Pragma: 'no-cache',
+    ...config.headers,
+  };
+  // config.headers.Accept = 'application/json';
 
   // const token = window.localStorage.getItem('token');
   const TOEKN =
@@ -18,7 +24,9 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   return config;
 }
 
-export const DEFAULT_BASE_URL = 'http://10.72.103.60:8000/api/v1';
+// export const DEFAULT_BASE_URL = 'http://192.168.110.135:8000/api/v1';
+export const DEFAULT_BASE_URL =
+  'https://unprepossessingly-undazed-grey.ngrok-free.dev/api/v1';
 
 export const api = Axios.create({
   baseURL: DEFAULT_BASE_URL,
