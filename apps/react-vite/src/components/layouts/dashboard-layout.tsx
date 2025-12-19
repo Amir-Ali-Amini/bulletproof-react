@@ -113,9 +113,10 @@ const DesktopHeader = () => (
     >
       <Typography variant="h5" fontWeight="bold">
         <Box component="span" sx={{ color: '#1E88E5' }}>
-          azki
+          Azki
         </Box>
-        <Box component="span" sx={{ color: '#F59E0B' }}>
+        {/* <Box component="span" sx={{ color: '#F59E0B' }}> */}
+        <Box component="span" sx={{ color: '#125793ff' }}>
           vam
         </Box>
       </Typography>
