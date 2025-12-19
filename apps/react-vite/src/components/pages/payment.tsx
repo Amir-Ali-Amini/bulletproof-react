@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 
 import { paths } from '@/config/paths';
+import { DEFAULT_BASE_URL } from '@/lib/api-client';
 
 // ============ TYPES ============
 interface BankCardType {
@@ -51,7 +52,8 @@ interface TransactionType {
 }
 
 // ============ API CALLS ============
-const API_BASE_URL = 'http://10.72.103.60:8000/api/v1';
+const API_BASE_URL = DEFAULT_BASE_URL;
+
 const api = {
   // getCards: () => axios.get<BankCardType[]>(`${API_BASE_URL}/api/v1/cards`),
   getCards: () =>

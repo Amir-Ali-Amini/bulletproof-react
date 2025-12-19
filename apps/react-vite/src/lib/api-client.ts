@@ -18,10 +18,10 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   return config;
 }
 
-const DEFAULT_BASE_URL = 'http://192.168.110.135:8000/';
+export const DEFAULT_BASE_URL = 'http://10.72.103.60:8000/api/v1';
 
 export const api = Axios.create({
-  baseURL: env.API_URL || DEFAULT_BASE_URL,
+  baseURL: DEFAULT_BASE_URL,
 });
 
 api.interceptors.request.use(authRequestInterceptor);

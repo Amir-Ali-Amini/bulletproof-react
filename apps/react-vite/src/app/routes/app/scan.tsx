@@ -5,14 +5,15 @@ import {
   Button,
   CircularProgress,
   Paper,
+  TextField,
   Typography,
 } from '@mui/material';
-import { Cancel, CheckCircle } from '@mui/icons-material';
+import { Cancel, CheckCircle, Lock } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 
 import { api } from '@/lib/api-client';
 
-const SCAN_ENDPOINT = '/scan';
+const SCAN_ENDPOINT = '/checkout/pending/confirm';
 const BARCODE_POLYFILL_URL =
   'https://cdn.jsdelivr.net/npm/@undecaf/barcode-detector-polyfill/dist/barcode-detector-polyfill.min.js';
 const JSQR_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
@@ -98,10 +99,22 @@ const ScanPage = () => {
     useState<NfcOverlayState>('hidden');
   const [nfcOverlayMessage, setNfcOverlayMessage] = useState('');
   const nfcOverlayTimeoutRef = useRef<number | null>(null);
+  const [isLocked, setIsLocked] = useState(true);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [lockError, setLockError] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'NDEFReader' in window) {
       setIsNfcSupported(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLocked) {
+      stopStream();
+      stopNfcScan();
+      hideNfcOverlay();
+      return;
     }
     startScanner();
     return () => {
@@ -109,7 +122,7 @@ const ScanPage = () => {
       stopNfcScan();
       hideNfcOverlay();
     };
-  }, []);
+  }, [isLocked]);
 
   const setupDetection = async () => {
     const detector = await getDetector();
@@ -316,12 +329,11 @@ const ScanPage = () => {
   };
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
+  api.post(SCAN_ENDPOINT, 'test_endpoint');
   const sendValueToApi = async (value: string) => {
     setStatus('sending');
     setStatusMessage('در حال ارسال به سرور...');
     try {
-      await sleep(10000); // 10 second
       await api.post(SCAN_ENDPOINT, { value });
 
       setStatus('success');
@@ -335,7 +347,7 @@ const ScanPage = () => {
   const confirmNfcSubmission = async (value: string) => {
     showNfcOverlay('pending', 'در حال ارسال درخواست به سرور...');
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+      // await new Promise((resolve) => setTimeout(resolve, 2500));
       await api.post(SCAN_ENDPOINT, { value });
       showNfcOverlay(
         'success',
@@ -348,6 +360,16 @@ const ScanPage = () => {
         'تایید پرداخت ناموفق بود. لطفا دوباره تلاش کنید.',
         3000,
       );
+    }
+  };
+
+  const handleUnlock = () => {
+    if (passwordInput.trim() === '1111') {
+      setIsLocked(false);
+      setPasswordInput('');
+      setLockError('');
+    } else {
+      setLockError('رمز عبور نادرست است.');
     }
   };
 
@@ -446,6 +468,113 @@ const ScanPage = () => {
 
   return (
     <>
+      {isLocked && (
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1500,
+            backgroundImage:
+              'linear-gradient(135deg, rgba(8,47,73,0.95), rgba(15,23,42,0.95))',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            px: 2,
+          }}
+        >
+          <Paper
+            elevation={8}
+            sx={{
+              width: '100%',
+              maxWidth: 380,
+              borderRadius: 4,
+              p: 4,
+              bgcolor: 'rgba(15, 23, 42, 0.85)',
+              color: 'white',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              backdropFilter: 'blur(14px)',
+              textAlign: 'center',
+            }}
+          >
+            <Box
+              sx={{
+                width: 72,
+                height: 72,
+                borderRadius: '50%',
+                bgcolor: 'rgba(59, 130, 246, 0.15)',
+                mx: 'auto',
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Lock sx={{ fontSize: 38, color: '#60A5FA' }} />
+            </Box>
+            <Typography variant="h5" fontWeight="700" sx={{ mb: 1 }}>
+              دسترسی محافظت‌شده
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 3, color: '#CBD5F5' }}>
+              برای ورود به صفحه اسکن، رمز عبور چهار رقمی را وارد کنید.
+            </Typography>
+            <TextField
+              value={passwordInput}
+              onChange={(e) => {
+                setPasswordInput(e.target.value);
+                setLockError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleUnlock();
+                }
+              }}
+              label="رمز ۴ رقمی"
+              variant="filled"
+              type="password"
+              inputProps={{ inputMode: 'numeric', maxLength: 4 }}
+              sx={{
+                mb: 2,
+                '& .MuiInputBase-input': {
+                  textAlign: 'center',
+                  letterSpacing: 6,
+                  fontSize: 26,
+                  color: 'white',
+                },
+                '& .MuiFilledInput-root': {
+                  borderRadius: 2,
+                  bgcolor: 'rgba(148, 163, 184, 0.1)',
+                },
+                '& .MuiFilledInput-root:before': { borderBottom: 'none' },
+                '& .MuiFilledInput-root:after': {
+                  borderBottom: '2px solid #60A5FA',
+                },
+              }}
+            />
+            {lockError && (
+              <Typography color="#F87171" fontWeight="600" sx={{ mb: 2 }}>
+                {lockError}
+              </Typography>
+            )}
+            <Button
+              variant="contained"
+              onClick={handleUnlock}
+              fullWidth
+              sx={{
+                py: 1.2,
+                borderRadius: 3,
+                bgcolor: '#2563EB',
+                '&:hover': { bgcolor: '#1D4ED8' },
+              }}
+            >
+              تایید و ورود
+            </Button>
+            <Typography variant="caption" sx={{ mt: 2, color: '#94A3B8' }}>
+              برای امنیت بیشتر رمز عبور پس از هر بار خروج دوباره درخواست می‌شود.
+            </Typography>
+          </Paper>
+        </Box>
+      )}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Typography variant="h6" fontWeight="600">
           اسکن و ارسال QR کد
