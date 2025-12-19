@@ -626,7 +626,7 @@ const ScanPage = () => {
           </Alert>
         )}
 
-        <Paper
+        {/* <Paper
           elevation={0}
           sx={{
             borderRadius: 3,
@@ -678,7 +678,7 @@ const ScanPage = () => {
               </Box>
             )}
           </Box>
-        </Paper>
+        </Paper> */}
 
         <Paper
           elevation={0}
@@ -708,9 +708,9 @@ const ScanPage = () => {
           >
             {isNfcScanning ? 'در انتظار کارت...' : 'شروع خواندن NFC'}
           </Button>
-          <Button variant="outlined" onClick={handleNfcScanTest}>
+          {/* <Button variant="outlined" onClick={handleNfcScanTest}>
             {'تست NFC'}
-          </Button>
+          </Button> */}
         </Paper>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
